@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_auth
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: auth_system
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build: ./backend
+    container_name: backend_auth
+    restart: always
+    depends_on:
+      - mysql
+    volumes:
+      - ./backend:/var/www
+    ports:
+      - "8080:8000"
+    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: auth_system
+      DB_USERNAME: root
+      DB_PASSWORD: root
+
+  frontend:
+    build: ./frontend
+    container_name: frontend_auth
+    restart: always
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5174:5173"
+    command: ["npm", "run", "dev", "--", "--host"]
+
+volumes:
+  mysql_data:
