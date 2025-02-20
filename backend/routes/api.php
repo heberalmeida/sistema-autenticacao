@@ -11,4 +11,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class);
     Route::apiResource('groups', GroupController::class);
+
+    Route::post('/groups/{id}/add-user', [GroupController::class, 'addUserToGroup']);
+    Route::post('/groups/{id}/remove-user', [GroupController::class, 'removeUserFromGroup']);
 });

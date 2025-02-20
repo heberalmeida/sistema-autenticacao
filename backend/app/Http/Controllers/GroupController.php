@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Group;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class GroupController extends Controller
@@ -33,5 +34,25 @@ class GroupController extends Controller
     {
         $group->delete();
         return response()->json(['message' => 'Grupo excluído com sucesso']);
+    }
+
+    public function addUserToGroup(Request $request, $groupId)
+    {
+        $group = Group::findOrFail($groupId);
+        $user = User::findOrFail($request->user_id);
+
+        $group->users()->attach($user->id);
+
+        return response()->json(['message' => 'Usuário adicionado ao grupo com sucesso']);
+    }
+
+    public function removeUserFromGroup(Request $request, $groupId)
+    {
+        $group = Group::findOrFail($groupId);
+        $user = User::findOrFail($request->user_id);
+
+        $group->users()->detach($user->id);
+
+        return response()->json(['message' => 'Usuário removido do grupo']);
     }
 }

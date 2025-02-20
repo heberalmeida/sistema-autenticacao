@@ -9,4 +9,11 @@ class Group extends Model
 {
     /** @use HasFactory<\Database\Factories\GroupFactory> */
     use HasFactory;
+
+    protected $fillable = ['name', 'description'];
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'group_user');
+    }
 }
