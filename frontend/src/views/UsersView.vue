@@ -88,6 +88,7 @@ import UserModal from '@/components/UserModal.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import ConfirmModal from '@/components/ConfirmModal.vue';
 import type { User } from '@/models/User';
+import { useFilteredUsers } from '@/composables/useFilteredUsers'; 
 
 const groupStore = useGroupStore();
 const showModal = ref(false);
@@ -98,6 +99,7 @@ const loading = ref(true);
 const users = ref<User[]>([]);
 const showConfirmModal = ref(false);
 const userToDelete = ref<User | null>(null);
+  const { filteredUsers } = useFilteredUsers(users, search);
 
 const fetchUsers = async () => {
   try {
@@ -113,13 +115,6 @@ onMounted(async () => {
   await fetchUsers();
   await groupStore.fetchGroups();
 });
-
-const filteredUsers = computed(() =>
-  users.value.filter(user =>
-    [user.name.toLowerCase(), user.email.toLowerCase()]
-      .some(field => field.includes(search.value.toLowerCase()))
-  )
-);
 
 const openModal = (user: User | null = null) => {
   isEditing.value = !!user;
@@ -152,7 +147,6 @@ const saveUser = async (user: User) => {
     console.error('Erro ao salvar usuário:', error);
   }
 };
-
 
 const confirmDelete = (user: User) => {
   userToDelete.value = user;
