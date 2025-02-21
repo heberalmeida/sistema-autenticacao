@@ -14,6 +14,8 @@ class GroupSeeder extends Seeder
     public function run(): void
     {
         Group::create(['name' => 'Administrador']);
-        Group::create(['name' => 'Usuário Padrão']);
+        Group::create(['name' => 'Saúde']);
+        Group::create(['name' => 'Educação']);
+        Group::create(['name' => 'Segurança']);
     }
 }

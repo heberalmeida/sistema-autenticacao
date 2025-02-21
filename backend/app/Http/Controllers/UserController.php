@@ -11,7 +11,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        return response()->json(User::all());
+        return response()->json(User::with('groups')->get());
     }
 
     public function store(Request $request)
@@ -19,7 +19,9 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|min:5',
+            'group_ids' => 'array',
+            'group_ids.*' => 'exists:groups,id'
         ]);
 
         if ($validator->fails()) {
@@ -32,23 +34,50 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        return response()->json($user, 201);
+        if (!empty($request->group_ids)) {
+            $user->groups()->sync($request->group_ids);
+        }
+
+        return response()->json($user->load('groups'), 201);
     }
 
     public function show(User $user)
     {
-        return response()->json($user);
+        return response()->json($user->load('groups'));
     }
 
     public function update(Request $request, User $user)
     {
-        $user->update($request->only(['name', 'email']));
-        return response()->json($user);
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8',
+            'group_ids' => 'array',
+            'group_ids.*' => 'exists:groups,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $user->update([
+            'name' => $request->name ?? $user->name,
+            'email' => $request->email ?? $user->email,
+            'password' => isset($request->password) ? Hash::make($request->password) : $user->password,
+        ]);
+
+        if (!empty($request->group_ids)) {
+            $user->groups()->sync($request->group_ids);
+        }
+
+        return response()->json($user->load('groups'));
     }
 
     public function destroy(User $user)
     {
+        $user->groups()->detach();
         $user->delete();
+
         return response()->json(['message' => 'Usuário excluído com sucesso']);
     }
 }

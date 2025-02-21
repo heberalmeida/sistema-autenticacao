@@ -15,7 +15,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|min:5',
         ]);
 
         if ($validator->fails()) {
@@ -46,7 +46,7 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->with('groups')->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Credenciais inválidas'], 401);
@@ -57,6 +57,10 @@ class AuthController extends Controller
         return response()->json([
             'name' => $user->name,
             'email' => $user->email,
+            'groups' => $user->groups->map(fn ($group) => [
+                'id' => $group->id,
+                'name' => $group->name
+            ]),
             'accessToken' => [
                 'token' => $token,
             ]
