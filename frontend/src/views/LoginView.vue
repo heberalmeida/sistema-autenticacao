@@ -55,8 +55,8 @@ import { useRouter } from 'vue-router';
 const authStore = useAuthStore();
 const router = useRouter();
 
-const email = ref('eu@heber.com.br');
-const password = ref('1');
+const email = ref('');
+const password = ref('');
 const emailError = ref('');
 const passwordError = ref('');
 const errorMessage = ref('');
