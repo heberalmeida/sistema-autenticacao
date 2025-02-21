@@ -8,12 +8,12 @@
     </div>
 
     <div class="mb-4 flex gap-4">
-      <input v-model="search" type="text" placeholder="Buscar usuário ou e-mail" class="border px-2 py-1 rounded w-full" />
+      <input v-model="search" type="text" placeholder="Buscar usuário ou e-mail" class="border px-2 py-1 rounded w-full" @input="onSearch" />
     </div>
 
-    <div class="bg-white p-6 rounded shadow-lg">
+    <div class="rounded shadow-lg">
       <LoadingSpinner v-if="loading" />
-      <div v-else>
+      <div v-else class="bg-white">
         <table class="w-full border-collapse border border-gray-200 hidden md:table">
           <thead>
             <tr class="bg-gray-50">
@@ -44,11 +44,11 @@
           </tbody>
         </table>
 
-        <div v-for="user in filteredUsers" :key="user.id ?? 'temp'" class="block md:hidden bg-gray-100 p-4 mb-4 rounded-lg shadow">
+        <div v-for="user in filteredUsers" :key="user.id ?? 'temp'" class="block md:hidden bg-white  p-4 mb-4 rounded-lg shadow">
             <h2 class="text-lg font-semibold">{{ user.name }}</h2>
             <p class="text-gray-600">{{ user.email }}</p>
             <p class="text-gray-500 text-sm">{{ user.groups?.map(g => g.name).join(', ') || 'Sem Grupo' }}</p>
-            <div class="mt-2 flex gap-2">
+            <div class="mt-2 flex gap-2 justify-end">
               <button @click="openModal(user)" class="bg-yellow-500 text-white px-3 py-1 rounded">Editar</button>
               <button @click="confirmDelete(user)" class="bg-red-500 text-white px-3 py-1 rounded">Excluir</button>
             </div>
@@ -77,6 +77,12 @@
       @confirm="deleteUser"
       @cancel="showConfirmModal = false"
     />
+
+    <Pagination
+      v-if="pagination.totalPages > 1"
+      :pagination="pagination"
+      @pageChanged="fetchUsers"
+    />
   </div>
 </template>
 
@@ -87,6 +93,7 @@ import { userService } from '@/services/userService';
 import UserModal from '@/components/UserModal.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import ConfirmModal from '@/components/ConfirmModal.vue';
+import Pagination from '@/components/Pagination.vue';
 import type { User } from '@/models/User';
 import { useFilteredUsers } from '@/composables/useFilteredUsers'; 
 
@@ -99,11 +106,29 @@ const loading = ref(true);
 const users = ref<User[]>([]);
 const showConfirmModal = ref(false);
 const userToDelete = ref<User | null>(null);
-  const { filteredUsers } = useFilteredUsers(users, search);
+const { filteredUsers } = useFilteredUsers(users, search);
+const pagination = ref({
+  currentPage: 1,
+  totalPages: 1,
+  totalItems: 0,
+});
 
-const fetchUsers = async () => {
+const onSearch = () => {
+  pagination.value.currentPage = 1;
+  fetchUsers();
+};
+
+const fetchUsers = async (page = 1) => {
   try {
-    users.value = await userService.fetchUsers();
+    loading.value = true;
+    const response = await userService.fetchUsers(search.value, page);
+    
+    users.value = response.data;
+    pagination.value = {
+      currentPage: response.current_page,
+      totalPages: response.last_page,
+      totalItems: response.total, 
+    };
   } catch (error) {
     console.error('Erro ao buscar usuários:', error);
   } finally {
@@ -132,21 +157,16 @@ const saveUser = async (user: User) => {
   try {
     if (isEditing.value) {
       await userService.updateUser(user);
-      users.value = users.value.map(u =>
-        u.id === user.id ? { ...user, groups: groupStore.groups.filter(g => user.group_ids.includes(g.id)) } : u
-      );
     } else {
-      const newUser = await userService.createUser(user);
-      if (newUser) {
-        newUser.groups = groupStore.groups.filter(g => user.group_ids.includes(g.id));
-        users.value.unshift(newUser);
-      }
+      await userService.createUser(user);
     }
+    fetchUsers(pagination.value.currentPage);
     closeModal();
   } catch (error) {
     console.error('Erro ao salvar usuário:', error);
   }
 };
+
 
 const confirmDelete = (user: User) => {
   userToDelete.value = user;

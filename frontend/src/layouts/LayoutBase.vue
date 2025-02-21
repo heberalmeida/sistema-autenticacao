@@ -38,7 +38,7 @@
       </nav>
     </div>
 
-    <main class="flex-1 p-6 overflow-y-auto">
+    <main class="flex-1 overflow-y-auto">
       <router-view></router-view>
     </main>
   </div>
@@ -76,7 +76,7 @@ const filteredMenuItems = computed(() => {
 });
 
 const isActive = (menuRoute: string) => {
-  return route.path.startsWith(menuRoute);
+  return route.path === menuRoute;
 };
 
 const logout = () => {

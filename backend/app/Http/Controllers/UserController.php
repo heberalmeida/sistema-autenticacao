@@ -9,9 +9,18 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(User::with('groups')->get());
+        $search = $request->query('search');
+
+        $users = User::with('groups')
+            ->when($search, function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->paginate(10);
+
+        return response()->json($users);
     }
 
     public function store(Request $request)

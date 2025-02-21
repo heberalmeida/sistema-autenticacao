@@ -28,9 +28,9 @@ const createGroup = async () => {
       </div>
     </div>
 
-    <div class="bg-white p-6 rounded shadow-lg">
+    <div class="rounded shadow-lg">
       <h2 class="text-xl font-semibold mb-4">Lista de Grupos</h2>
-      <table class="w-full border-collapse border border-gray-200">
+      <table class="w-full border-collapse border border-gray-200 bg-white">
         <thead>
           <tr class="bg-gray-50">
             <th class="border p-2">ID</th>
